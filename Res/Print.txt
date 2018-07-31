@@ -1,0 +1,13 @@
+	    DGVPrinter pr = new DGVPrinter();
+            pr.Title = "Order Details\n\n\n";
+            pr.SubTitle = string.Format("Date: {0}",DateTime.Now.ToShortDateString());
+            pr.PageNumbers = true;
+            pr.PageNumberInHeader = false;
+            pr.PorportionalColumns = true;
+            pr.HeaderCellAlignment = StringAlignment.Near;
+            pr.Footer = "Created by Garbage";
+            pr.FooterSpacing = 10;
+            pr.PrintDataGridView(dataGridView1);
+
+
+            MessageBox.Show("Pdf Creadted !!");

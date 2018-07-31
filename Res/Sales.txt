@@ -1,0 +1,762 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Data.Sql;
+using System.Data.SqlClient;
+using System.IO;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
+using DGVPrinterHelper;
+
+namespace InvetoryManagementSystem1
+{
+    public partial class ManageOrderForm : Form
+    {
+        SqlCommand cmd1, cm2, cm3,cmd4,cmd5,cmd6;
+        SqlDataAdapter adp1, adp2, adp3,adp4,adp5,adp6,adp7;
+        SqlDataReader rdr; //for storing Qntty
+
+
+        PersonalOrderForm pf1;
+
+        //for storing Quantity
+
+        int qntty=0;
+        int Total = 0;
+        int bb1=0, bb2=0, bb3=0,aa=0,b1;
+
+        void UpdateQntty()
+        {
+            string query4 = " Update ProductTable SET Quantity_Available='"+qntty+"' Where Product_Name='"+textBox3.Text+"' ";
+
+            try
+            {
+                if (qntty < 0)
+                {
+                    MessageBox.Show("Update not Possible!!");
+                }
+                else
+                {
+                    DbConnection.conn.Open();
+                    cmd5 = new SqlCommand(query4, DbConnection.conn);
+
+                    if (cmd5.ExecuteNonQuery() == 1)
+                    {
+                    //    MessageBox.Show("Update Successfull");
+                    }
+
+                    else
+                    {
+                        MessageBox.Show("Update Not Successfull");
+                    }
+                    DbConnection.conn.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                DbConnection.conn.Close();
+                ViewProduct();
+                
+            }
+
+        }
+
+
+        void View()
+        {
+
+            try
+            {
+
+
+                adp1 = new SqlDataAdapter("SELECT * FROM OrderTable", DbConnection.conn);
+                DbConnection.conn.Open();
+
+                DataSet ds1 = new DataSet();
+                adp1.Fill(ds1, "OrderTable");
+                dataGridView1.DataSource = ds1.Tables["OrderTable"];
+
+                DbConnection.conn.Close();
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                DbConnection.conn.Close();
+            }
+            try
+            {
+
+
+                SqlCommand cmd9 = new SqlCommand("SELECT SUM(Total) FROM OrderTable ", DbConnection.conn);
+                DbConnection.conn.Open();
+
+                SqlDataReader rdr = cmd9.ExecuteReader();
+
+                if (rdr.Read())
+                {
+
+                     label9.Text = rdr.GetInt32(0).ToString();
+
+                }
+
+
+                DbConnection.conn.Close();
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                DbConnection.conn.Close();
+            }
+        }
+        void ViewProduct()
+        {
+            try
+            {
+
+
+                adp2 = new SqlDataAdapter("SELECT * FROM ProductTable", DbConnection.conn);
+                DbConnection.conn.Open();
+
+                DataSet ds2 = new DataSet();
+                adp2.Fill(ds2, "ProductTable");
+                dataGridView2.DataSource = ds2.Tables["ProductTable"];
+                DbConnection.conn.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                DbConnection.conn.Close();
+            }
+
+        }
+        void storeQntty()
+        {
+
+            try
+            {
+                DbConnection.conn.Open();
+                string xy = "SELECT Quantity_Available FROM ProductTable Where Product_Name='" + textBox3.Text + "'";
+
+                SqlCommand cmd08 = new SqlCommand(xy, DbConnection.conn);
+                rdr = cmd08.ExecuteReader();
+
+                if (rdr.Read())
+                {
+                    qntty = rdr.GetInt32(0);
+
+                }
+                DbConnection.conn.Close();
+            }
+            catch
+            {
+                MessageBox.Show("Something Wrong !!");
+            }
+            finally
+            {
+                DbConnection.conn.Close();
+            }
+            
+
+        }
+
+        private void comboBox1_Leave(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                if (comboBox1.SelectedItem == "All")
+                {
+                    ViewProduct();
+                }
+
+                else
+                {
+                    adp4 = new SqlDataAdapter("SELECT * FROM ProductTable where Category= '" + comboBox1.SelectedItem + "' ", DbConnection.conn);
+                DbConnection.conn.Open();
+                
+                
+                    DataSet ds4 = new DataSet();
+                    adp4.Fill(ds4, "ProductTable");
+                    dataGridView2.DataSource = ds4.Tables["ProductTable"];
+                    DbConnection.conn.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                DbConnection.conn.Close();
+            }
+        }
+
+        private void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+             
+
+
+            textBox1.Text = dataGridView1.CurrentRow.Cells[0].Value.ToString();
+            textBox2.Text = dataGridView1.CurrentRow.Cells[1].Value.ToString();
+            textBox3.Text = dataGridView1.CurrentRow.Cells[2].Value.ToString();
+            textBox4.Text = dataGridView1.CurrentRow.Cells[3].Value.ToString();
+            numericUpDown1.Text = dataGridView1.CurrentRow.Cells[4].Value.ToString();
+            textBox6.Text = dataGridView1.CurrentRow.Cells[5].Value.ToString();
+            dateTimePicker2.Text= dataGridView1.CurrentRow.Cells[6].Value.ToString();
+
+            try
+            {
+                bb1 = Convert.ToInt32(dataGridView1.CurrentRow.Cells[4].Value.ToString());
+            }
+            catch
+            {
+                MessageBox.Show("Select a Valid Row!!");
+            }
+
+            storeQntty();
+            numericUpDown1.Maximum = qntty+bb1;
+            
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            string query3 = "DELETE FROM OrderTable WHERE Order_ID = '" + textBox1.Text+"' ";
+            try
+            {
+                
+                DbConnection.conn.Open();
+                SqlCommand cmd7 = new SqlCommand(query3, DbConnection.conn);
+
+                if (cmd7.ExecuteNonQuery() == 1)
+                {
+            //        MessageBox.Show("DELETED");
+                }
+                else
+                {
+                    MessageBox.Show("NOT DELETED");
+                }
+                DbConnection.conn.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                DbConnection.conn.Close();
+                View();
+               
+            }
+            
+
+        }
+
+        private void button5_Click_1(object sender, EventArgs e)
+        {
+            try
+            {
+
+
+                adp6 = new SqlDataAdapter("SELECT Product_Name,Price_per,Quantity,Total FROM OrderTable Where  Customer_ID='" + textBox5.Text + "' ", DbConnection.conn);
+                DbConnection.conn.Open();
+
+                DataSet ds6 = new DataSet();
+                adp6.Fill(ds6, "OrderTable");
+
+                pf1 = new PersonalOrderForm();
+                pf1.Show();
+                pf1.dataGridView1.DataSource = ds6.Tables["OrderTable"];
+                DbConnection.conn.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                DbConnection.conn.Close();
+            }
+            try
+            {
+
+
+                SqlCommand cmd9= new SqlCommand("SELECT SUM(Total) FROM OrderTable Where  Customer_ID='" + textBox5.Text + "' ", DbConnection.conn);
+                DbConnection.conn.Open();
+
+                rdr = cmd9.ExecuteReader();
+
+                if (rdr.Read())
+                {
+                    
+                    pf1.label2.Text = rdr.GetInt32(0).ToString();
+
+                }
+                DbConnection.conn.Close();
+
+
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                DbConnection.conn.Close();
+            }
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+           
+        }
+
+        private void button6_Click_1(object sender, EventArgs e)
+        {
+            DGVPrinter pr = new DGVPrinter();
+            pr.Title = "Order Details\n\n\n";
+            pr.SubTitle = string.Format("Date: {0}",DateTime.Now.ToShortDateString());
+            pr.PageNumbers = true;
+            pr.PageNumberInHeader = false;
+            pr.PorportionalColumns = true;
+            pr.HeaderCellAlignment = StringAlignment.Near;
+            pr.Footer = "Created by Garbage";
+            pr.FooterSpacing = 10;
+            pr.PrintDataGridView(dataGridView1);
+
+
+            MessageBox.Show("Pdf Creadted !!");
+        }
+
+        private void textBox6_MouseHover(object sender, EventArgs e)
+        {
+            try
+            {
+                int aa = Convert.ToInt32(textBox4.Text);
+                int bb = Convert.ToInt32(numericUpDown1.Text);
+                
+                if (checkBox1.Checked)
+                {
+                    int tt = aa * bb;
+                    //   Console.WriteLine(tt);
+                    int xx = Convert.ToInt32(numericUpDown2.Text);
+
+
+                    double per = (xx * .01);
+                    //   Console.WriteLine(per);
+                    double dis = per * tt;
+                    // Console.WriteLine(dis);
+
+                    int cc = (int)(tt - dis);
+                    textBox6.Text = cc.ToString();
+
+                    // Console.WriteLine(Total);
+                }
+                else
+                {
+                    int cc = aa * bb;
+                    textBox6.Text = cc.ToString();
+                }
+
+                
+            }
+            catch
+            {
+                MessageBox.Show("Select a Valid Row!!");
+            }
+        }
+
+        private void label9_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button7_Click(object sender, EventArgs e)
+        {
+            Load1();
+        }
+
+        private void button8_Click(object sender, EventArgs e)
+        {
+            ManageProductForm mp1 = new ManageProductForm();
+            mp1.Show();
+            this.Dispose();
+        }
+
+        private void button9_Click(object sender, EventArgs e)
+        {
+            ManageUserForm mu1 = new ManageUserForm();
+            mu1.Show();
+            this.Dispose();
+        }
+
+        private void button2_MouseHover(object sender, EventArgs e)
+        {
+           
+        }
+
+        private void button2_MouseLeave(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkBox1.Checked)
+            {
+                numericUpDown2.Visible = true;
+                label10.Visible = true;
+            }
+            else
+            {
+                numericUpDown2.Visible = false;
+                label10.Visible = false;
+            }
+        }
+
+        private void dataGridView2_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void dataGridView1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            try
+            {
+
+
+                adp6 = new SqlDataAdapter("SELECT * FROM OrderTable Where  Date='"+dateTimePicker1.Text+"' ", DbConnection.conn);
+                DbConnection.conn.Open();
+
+                DataSet ds6 = new DataSet();
+                adp6.Fill(ds6, "OrderTable");
+                dataGridView1.DataSource = ds6.Tables["OrderTable"];
+                DbConnection.conn.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                DbConnection.conn.Close();
+            }
+        }
+
+        private void dataGridView2_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            try
+            {
+                textBox3.Text = dataGridView2.CurrentRow.Cells[2].Value.ToString();
+                textBox4.Text = dataGridView2.CurrentRow.Cells[4].Value.ToString();
+                numericUpDown1.Maximum = Convert.ToInt32(dataGridView2.CurrentRow.Cells[3].Value);
+                qntty = Convert.ToInt32(dataGridView2.CurrentRow.Cells[3].Value);
+            }
+            catch
+            {
+                MessageBox.Show("Select a Valid Row!!");
+            }
+        }
+
+        private void dataGridView3_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            try
+            {
+                textBox2.Text = dataGridView3.CurrentRow.Cells[1].Value.ToString();
+            }
+            catch
+            {
+                MessageBox.Show("Select a valid Row !!");
+            }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                aa = Convert.ToInt32(numericUpDown1.Text);
+               
+
+                //for  Total input
+                b1 = Convert.ToInt32(textBox4.Text);
+                if (checkBox1.Checked)
+                {
+                    int tt = aa * b1;
+                 //   Console.WriteLine(tt);
+                    int xx = Convert.ToInt32(numericUpDown2.Text);
+                   
+
+                    double per =(xx * .01);
+                 //   Console.WriteLine(per);
+                    double dis =per*tt;
+                   // Console.WriteLine(dis);
+
+                    Total =(int)(tt-dis);
+
+                   // Console.WriteLine(Total);
+                }
+                else
+                {
+                    Total = aa * b1;
+                }
+            }
+            catch
+            {
+                MessageBox.Show("Select a Valid Row!!");
+            }
+
+
+            string query1 = "Insert Into OrderTable(Order_ID,Customer_ID,Product_Name,Price_per,Quantity,Total,Date) Values ('" + textBox1.Text + "','" + textBox2.Text + "','" + textBox3.Text + "','" + textBox4.Text + "','" + numericUpDown1.Text + "','" + Total + "','" + dateTimePicker2.Text + "')";
+
+            DbConnection.conn.Open();
+            SqlCommand command = new SqlCommand(query1, DbConnection.conn);
+
+
+            try
+            {
+                if (aa>0) {
+
+                    if (command.ExecuteNonQuery() == 1)
+                    {
+                        qntty -= aa;
+                        MessageBox.Show("Data Inserted Successfully !!");
+                        //   Console.WriteLine(qntty);
+                    }
+                    else
+                    {
+              //          MessageBox.Show("Data Not Inserted");
+                    }
+                    
+                }
+                else
+                {
+                    MessageBox.Show("Invalid Quantity !!");
+                }
+                DbConnection.conn.Close();
+                
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                DbConnection.conn.Close();
+                View();
+                UpdateQntty();
+            }
+
+           
+
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            
+
+            try
+            {
+                 bb2 = Convert.ToInt32(numericUpDown1.Text);
+                //for  Total input
+                int b1 = Convert.ToInt32(textBox4.Text);
+                if (checkBox1.Checked)
+                {
+                    int tt = bb2 * b1;
+                    //   Console.WriteLine(tt);
+                    int xx = Convert.ToInt32(numericUpDown2.Text);
+
+
+                    double per = (xx * .01);
+                    //   Console.WriteLine(per);
+                    double dis = per * tt;
+                    // Console.WriteLine(dis);
+
+                    Total = (int)(tt - dis);
+
+                    // Console.WriteLine(Total);
+                }
+                else
+                {
+                    Total = bb2 * b1;
+                }
+            }
+            catch
+            {
+                MessageBox.Show("Select a Valid Row!!");
+            }
+            //for Comparing qntty
+            if (bb1 > bb2)
+                {
+                    bb3 = bb1 - bb2;
+                    qntty += bb3;
+                    
+                }
+                else
+                {
+                    bb3 = bb2 - bb1;
+
+                
+                qntty -= bb3;
+                   
+                    
+                }
+          
+
+            
+
+            string query2 = "UPDATE OrderTable SET Customer_ID='" + textBox2.Text + "',Product_Name='" + textBox3.Text + "',Price_per='" + textBox4.Text + "',Quantity='" + bb2 + "',Total='" + Total + "',Date='" + dateTimePicker2.Text + "'   WHERE Order_ID ='" + textBox1.Text + "' ";
+            try
+            {
+                if (qntty < 0)
+                {
+                    MessageBox.Show("Update not Possible!!");
+                }
+                else
+                {
+                    if (bb2 > 0)
+                    {
+                        DbConnection.conn.Open();
+                        cmd5 = new SqlCommand(query2, DbConnection.conn);
+
+                        if (cmd5.ExecuteNonQuery() == 1)
+                        {
+                            MessageBox.Show("Update Successfull");
+                        }
+                        else
+                        {
+                            MessageBox.Show("Update Not Successfull");
+                        }
+                        DbConnection.conn.Close();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Quantity Invalid !!");
+                    }
+                    
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                DbConnection.conn.Close();
+                View();
+                UpdateQntty();
+
+            }
+
+
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            try
+            {
+
+
+                adp1 = new SqlDataAdapter("SELECT * FROM OrderTable", DbConnection.conn);
+                DbConnection.conn.Open();
+
+                DataSet ds1 = new DataSet();
+                adp1.Fill(ds1, "OrderTable");
+                dataGridView1.DataSource = ds1.Tables["OrderTable"];
+                DbConnection.conn.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                DbConnection.conn.Close();
+            }
+        }
+
+        public ManageOrderForm()
+        {
+            InitializeComponent();
+        }
+
+        private void comboBox1_MouseLeave(object sender, EventArgs e)
+        {
+            
+        }
+
+        void Load1()
+        {
+            View();
+            ViewProduct();
+            try
+            {
+
+
+                adp3 = new SqlDataAdapter("SELECT Name,ID FROM RegistrationTable", DbConnection.conn);
+                DbConnection.conn.Open();
+
+                DataSet ds3 = new DataSet();
+                adp3.Fill(ds3, "RegistrationTable");
+                dataGridView3.DataSource = ds3.Tables["RegistrationTable"];
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                DbConnection.conn.Close();
+            }
+        }
+
+        private void ManageOrderForm_Load(object sender, EventArgs e)
+        {
+            Load1();
+        }
+
+        private void p8btn2_Click(object sender, EventArgs e)
+        {
+            LoginForm lf1 = new LoginForm();
+            lf1.Show();
+            this.Dispose();
+        }
+
+        private void p8btn1_Click(object sender, EventArgs e)
+        {
+            AdminForm ad1 = new AdminForm();
+            ad1.Show();
+            this.Dispose();
+        }
+    }
+}

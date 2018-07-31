@@ -1,0 +1,22 @@
+ 	    string query1 = "Select Product_Name,Sum(Quantity) as Sold_Quantity From OrderTable Group By Product_Name";
+            SqlCommand cmd1 = new SqlCommand(query1, DbConnection.conn);
+            SqlDataReader rdr1;
+
+            try
+            {
+                DbConnection.conn.Open();
+                rdr1 = cmd1.ExecuteReader();
+                while (rdr1.Read())
+                {
+                    this.chart1.Series["Sold Quantity"].Points.AddXY(rdr1.GetString(0), rdr1.GetInt32(1));
+                }
+                
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                DbConnection.conn.Close();
+            }

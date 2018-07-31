@@ -1,0 +1,22 @@
+	    try
+            {
+                Document Doc = new Document(iTextSharp.text.PageSize.LETTER, 10, 10, 42, 35);
+                PdfWriter.GetInstance(Doc, new FileStream("Report.pdf", FileMode.Create));
+                Doc.Open();
+
+                var chartImage = new MemoryStream();
+                chart1.SaveImage(chartImage, ChartImageFormat.Png);
+                iTextSharp.text.Image CI = iTextSharp.text.Image.GetInstance(chartImage.GetBuffer());
+                Doc.Add(CI);
+
+
+
+                Doc.Close();
+
+                MessageBox.Show("Check ur default Folder","PDF");
+
+            }
+            catch
+            {
+                MessageBox.Show("Something went wrong !!");
+            }
